@@ -1,0 +1,11 @@
+#!/bin/bash
+cd /tmp/AgentCyTE
+OBJ=c8af053599e0b5118af22c6928bfc7b2bdd6fbd8
+echo "=== 在 main 分支对象范围内找该对象 ===="
+git rev-list --objects main 2>/dev/null | grep "$OBJ" || echo "  不在 main 对象列表"
+echo "=== 直接 cat-file -e 测试 ==="
+git cat-file -e "$OBJ" 2>&1 && echo "  cat-file -e 通过 -> 对象存在" || echo "  cat-file -e 失败 -> 对象缺失"
+echo "=== 所有 pack 里的对象能否找到 ==="
+git verify-pack -v "$(ls .git/objects/pack/*.idx 2>/dev/null | head -1)" 2>/dev/null | grep -c "$OBJ" || echo "  0 (不在第一个 pack)"
+echo "=== git 版本 (协议相关) ==="
+git --version

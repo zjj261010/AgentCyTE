@@ -1,0 +1,15 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.dS_Store
+.DS_Store
+docs/images
+server.pid
+tmp_hitl
+validation/reports
+tests
+.env
+Dockerfile.agentcyte

@@ -1,0 +1,9 @@
+lxml==6.1.2
+Flask==3.0.3
+Werkzeug==3.0.3
+PyYAML==6.0.2
+psutil==5.9.8
+grpcio==1.69.0
+protobuf==5.29.3
+netaddr==0.10.1
+pytest>=8.0.0
