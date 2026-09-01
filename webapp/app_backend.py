@@ -10,7 +10,14 @@ import datetime
 import time
 import uuid
 import threading
+from concurrent.futures import ThreadPoolExecutor
 import csv
+
+# Reusable pool for async run finalizers. Previously each run spawned a new daemon
+# thread that was never reaped; on heavily-thread-restricted hosts (e.g. Kylin V10
+# with a low pids/max_map_count) that could hit "unable to create new thread" at
+# first deploy and an unresponsive Web UI (curl 000) after restart.
+_REUSE_ASYNC_POOL = ThreadPoolExecutor(max_workers=4, thread_name_prefix="finalizer")
 import logging
 import zipfile
 import secrets
@@ -4965,9 +4972,8 @@ def run_cli_async():
                 pass
 
     try:
-        t = threading.Thread(target=_wait_and_finalize_async, args=(run_id,), daemon=True)
-        t.start()
-        app.logger.debug("[async] Finalizer thread started for run_id=%s", run_id)
+        _REUSE_ASYNC_POOL.submit(_wait_and_finalize_async, run_id)
+        app.logger.debug("[async] Finalizer submitted to reusable pool for run_id=%s", run_id)
     except Exception:
         pass
     return jsonify({"run_id": run_id})

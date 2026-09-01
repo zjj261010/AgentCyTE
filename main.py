@@ -26,7 +26,8 @@ def main() -> None:
     except ValueError:
         raise SystemExit(f"Invalid CORETG_PORT value: {port_str!r}")
 
-    app.run(host=default_host, port=port, debug=debug)
+    # threaded=True: 避免 Werkzeug 默认单线程下单个阻塞请求卡住整个页面(麒麟上表现为 curl 000)
+    app.run(host=default_host, port=port, debug=debug, threaded=True)
 
 
 if __name__ == "__main__":
