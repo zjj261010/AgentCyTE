@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scenarios>
+  <Scenario name="attack-drill" scenario_total_nodes="7" base_nodes="7">
+    <ScenarioEditor>
+      <BaseScenario filepath=""/>
+
+      <!-- 1) 节点角色: 2 路由器 + 5 主机 (攻击机/靶机等由 Services 细化) -->
+      <section name="Node Information" base_nodes="7" density_count="7">
+        <item selected="Router" v_metric="Count" v_count="2"/>
+        <item selected="Workstation" v_metric="Count" v_count="5"/>
+      </section>
+
+      <!-- 2) Routing: 2 台真路由器, OSPFv2 互联 -->
+      <section name="Routing" density="1.0">
+        <item selected="OSPFv2" v_metric="Count" v_count="2" r2s_mode="Exact" r2s_edges="2"/>
+      </section>
+
+      <!-- 3) Services: 主机分配 SSH/DefaultRoute -->
+      <section name="Services" density="1.0">
+        <item selected="SSH" v_metric="Count" v_count="5"/>
+      </section>
+
+      <section name="Notes">
+        <notes>AgentCyTE attack-drill: attacker->router->target (2 router + 5 hosts)</notes>
+      </section>
+    </ScenarioEditor>
+  </Scenario>
+</Scenarios>
