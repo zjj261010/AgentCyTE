@@ -28,6 +28,39 @@
 
 > **`v_metric` 是数量语义的核心开关**：`Count` 是「加法项」（`count_items`），`Weight` 是「比例项」（`weight_items`，按 `factor` 从密度池分）。解析器先收集 `count_map` 与 `weight_items`，再 `compute_role_counts` 合成最终 `role_counts`。
 
+### `<section>` 级属性（功能型 + 规划元数据型）
+
+每个 `<section>` 上除了 `name`，还能挂两类属性——**功能型**（解析器直接读到并影响拓扑生成）和**规划元数据型**（UI 写回做 round-trip，CLI 在 report 里回显/校验，**不直接决定生成**）：
+
+| 属性 | 类型 | 应用 section | 作用 | 分类 |
+|:--|:--|:--|:--|:--|
+| `density` | float 或 int | Routing / Services / Traffic / Vulnerabilities / Segmentation | **密度**：`≤1` 按比例、`>1` 按绝对值（语义随 section 不同） | **功能型** |
+| `base_nodes` | int | Node Information | host 密度池基数（`density_base`），按比例分池 | **功能型** |
+| `density_count` | int | Node Information | `base_nodes` 的旧别名（legacy） | **功能型** |
+| `total_nodes` | int | Node Information | 该 section「总节点」声明（历史字段，Node Info 池取数的降级来源之一） | **功能型** |
+| `additive_nodes` | int | Node Information | Count 行合计（=`base` 外再叠加的绝对数） | **规划元数据** |
+| `combined_nodes` | int | Node Information | `base_nodes + additive_nodes` 合计 | **规划元数据** |
+| `weight_rows` | int | Node Info / Routing / Services / Traffic / Vulnerabilities / Segmentation | Weight 行数（门控：`weight_rows>0` 才收 Weight item） | **规划元数据** |
+| `count_rows` | int | 同上 | Count 行数（门控） | **规划元数据** |
+| `weight_sum` | float | 同上 | Weight 因子原始和（未归一化） | **规划元数据** |
+| `explicit_count` | int | Routing / Vulnerabilities | 绝对行合计（additive） | **规划元数据** |
+| `derived_count` | int | Routing / Vulnerabilities | 密度推导量 | **规划元数据** |
+| `total_planned` | int | Routing / Vulnerabilities | `explicit_count + derived_count` | **规划元数据** |
+
+**要点**：
+- **功能型**必须写对——`base_nodes`/`density` 直接影响「建多少节点/多密」。**规划元数据是可选回显字段**：写不写、写得对不对，**不影响拓扑生成**，但 CLI 会在 report/规划 JSON 里以 `plan_*_*` 键回显（`cli.py` 里 `plan_node_additive_nodes`、`plan_routing_explicit`…），供前后端对账。
+- `weight_rows` 特殊：**它决定是否启用 Weight 门控**（`node_info.py`：只有 section 的 `weight_rows` 属性存在时，Weight item 的 `factor` 才被收集）。如果你在 Node Info 写了 Weight item，应带 `weight_rows` 反映行数。
+- 与「离线黄金规则」冲突时：功能型里 `density` 可自由调（不影响 RUNNING）；规划元数据随便写与否都不卡——真正影响卡 CONFIG 的是 `item` 的 `Wireless` 角色、`Traffic`/`Segmentation` section（见 FAQ Q4/Q5）。
+
+**实例**（一个同时带两类的 section）：
+```xml
+<section name="Routing" density="1.0"          <!-- 功能型 -->
+         explicit_count="2" derived_count="0" total_planned="2"  <!-- 元数据 -->
+         weight_rows="1" count_rows="1" weight_sum="1.000">
+  <item .../>
+</section>
+```
+
 ---
 
 ## 1. `<section name="Node Information">` —— 角色与数量
